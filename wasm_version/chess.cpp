@@ -114,6 +114,7 @@ std::string Chess::MoveFromPos(std::string moves)
 		// Handle promotion
 		if (move.length() == 6 && move[4] == '=') {
 			char promotionPiece = move[5];
+			promotionPiece = tolower(promotionPiece);
 			board[endRow][endCol].setPiece(promotionPiece, color);
 			log.back().setPromotion(true);
 			log.back().setPromotionPiece(promotionPiece);
@@ -135,18 +136,28 @@ std::string Chess::MoveFromPos(std::string moves)
     CheckForDraws();
 
     if(checkmate)
+	{
         thoughts << std::endl << "You win by checkmate!" << std::endl << std::endl;
+		return thoughts.str();
+	}
     else if(stalemate || (DidIWin() && !blackcheck))
+	{
         thoughts << std::endl << "It's a draw by stalemate!" << std::endl << std::endl;
+		if(stalemate)
+			return thoughts.str();
+	}
     else if(DidIWin())
+	{
         thoughts << std::endl << "I win by checkmate!" << std::endl << std::endl;
-    if(blackcheck)
+	}
+    else if(blackcheck)
         thoughts << "CHECK!!!" << std::endl;
 	
 	if(enpassant)
 		enpassant = !enpassant;
 
-	thoughts << enpassant << " " << enpassantcol << " " << cancastlekingside << " " << cancastlequeenside << " " << veryspecificexception << std::endl;	
+	//PrintSquares();
+	thoughts << enpassant << " " << enpassantcol << " " << cancastlekingside << " " << cancastlequeenside << " " << veryspecificexception << std::endl;
 	thoughts << "OFFICIAL MOVE: " << GetLastMove() << std::endl;
     return thoughts.str();
 }
@@ -218,30 +229,30 @@ void Chess::PrintBoard()
 	int row = 8;
 	for(int i = 7; i >= 0; i--)
 	{
-		std::cout << row << " |";
+		thoughts << row << " |";
 		for(int j = 0; j < 8; j++)
 		{
 			if(board[i][j].getColor() == 0)
-				std::cout << board[i][j].getPiece() << " ";
+				thoughts << board[i][j].getPiece() << " ";
 			else if(board[i][j].getColor() == 1)
-				std::cout << char(toupper(board[i][j].getPiece())) << " ";
+				thoughts << char(toupper(board[i][j].getPiece())) << " ";
 			else
-				std::cout << "  ";
+				thoughts << "  ";
 		}
-		std::cout << std::endl;
+		thoughts << std::endl;
 		row--;
 	}
-	std::cout << "   ";
+	thoughts << "   ";
 	for(int i = 1; i <= 8; i++)
 	{
-		std::cout << "_ ";
+		thoughts << "_ ";
 	}
-	std::cout << std::endl << "   ";
+	thoughts << std::endl << "   ";
 	for(int i = 65; i < 73; i++)
 	{
-		std::cout << char(i) << " ";
+		thoughts << char(i) << " ";
 	}
-	std::cout << std::endl;
+	thoughts << std::endl;
 }
 
 void Chess::SetBoard()
@@ -1710,32 +1721,32 @@ void Chess::PrintSquares()
 	{
 		for(int j = 0; j < 8; j++)
 		{
-			std::cout << board[i][j].SquareName() << " Defense Number: " << board[i][j].getDefense() << " {";
+			thoughts << board[i][j].SquareName() << " Defense Number: " << board[i][j].getDefense() << " {";
 		        for(char c : board[i][j].getDefenders())
 			{
-				std::cout << c << ", ";
+				thoughts << c << ", ";
 			}	
-			std::cout << "} Attack Number: " << board[i][j].getAttack() << " {";
+			thoughts << "} Attack Number: " << board[i][j].getAttack() << " {";
 		        for(char c : board[i][j].getAttackers())
 			{
-				std::cout << c << ", ";
+				thoughts << c << ", ";
 			}
-			std::cout << "} Piece: ";
+			thoughts << "} Piece: ";
 			if(board[i][j].getColor() == 0)
 			{
-				std::cout << "White ";
+				thoughts << "White ";
 			}
 			else if(board[i][j].getColor() == 1)
 			{
-				std::cout << "Black ";
+				thoughts << "Black ";
 			}
 			if(board[i][j].IsEmpty())
 			{
-				std::cout << "n/a" << std::endl;
+				thoughts << "n/a" << std::endl;
 			}
 			else
 			{
-				std::cout << board[i][j].getPiece() << std::endl;
+				thoughts << board[i][j].getPiece() << std::endl;
 			}
 		}
 	}
@@ -2520,7 +2531,7 @@ void Chess::WhitetoMove()
 					{
 						if(makemove && decision == movecounter)
 						{
-							thoughts << "Pawn takes " << board[5][enpassantcol].SquareName() << " becuase en passant is forced!" << std::endl;
+							thoughts << "Pawn takes " << board[5][enpassantcol].SquareName() << " because en passant is forced!" << std::endl;
 							moved = true;
 							ValidMove(5, enpassantcol, 'p', 0, ' ', true);
 						}
@@ -7765,14 +7776,30 @@ int Chess::Decide(double x, std::vector<Move> validmoves)
 			}
 		}
 	}
+
+	if (bestmove.getScore() > 200) {
+		thoughts << "!veryhappy" << std::endl;
+	} else if (bestmove.getScore() > 100) {
+		thoughts << "!happy" << std::endl;
+	} else if (bestmove.getScore() > 0) {
+		thoughts << "!neutral" << std::endl;
+	} else if (bestmove.getScore() > -200) {
+		thoughts << "!sad" << std::endl;
+	} else if (bestmove.getScore() > -1000) {
+		thoughts << "!verysad" << std::endl;
+	} else {
+		thoughts << "!mated" << std::endl;
+	}
+
 	if(bestmove.getScore() < -9999999)
 	{
 		thoughts << "I don't feel so good..." << std::endl;
 	}
-	if(bestmove.getScore() > 99999999 && bestmove.getScore() < 999999999)
+	/*if(bestmove.getScore() > 99999999 && bestmove.getScore() < 999999999)
 	{
 		thoughts << "i'm feeling pretty good about my next move ngl" << std::endl;
-	}
+	}*/
+	
 	thoughts << std::endl;
 
 	return bestmoveindex;
